@@ -1,16 +1,30 @@
 import { theme } from "@/theme";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Image, SafeAreaView, StatusBar, Text, TextInput, View, TouchableOpacity, ScrollView } from "react-native";
 import { MagnifyingGlassIcon, } from "react-native-heroicons/outline"
 import { CalendarDaysIcon, MapPinIcon } from "react-native-heroicons/solid"
+import { debounce } from 'lodash';
+import { fetchLocations } from "@/api/weather";
 
 export default function Home() {
     const [showSearch, toggleSearch] = useState(false);
     const [locations, setLocations] = useState([]);
-
+    
     const handleLocation = (loc) => {
         console.log(loc);
+        setLocations([]);
     }
+    
+    const handleSearch = (value) => {
+        if (value.length > 2) {
+            fetchLocations({cityName: value})
+            .then(data => {
+                setLocations(data);
+            })
+        }
+    }
+    
+    const handleTextDebounce = useCallback(debounce(handleSearch, 1000), []);
 
     return (
         <View className="flex-1 relative">
@@ -27,6 +41,7 @@ export default function Home() {
                         {showSearch ? 
                             (
                                 <TextInput 
+                                    onChangeText={handleTextDebounce}
                                     placeholder="Search city" 
                                     placeholderTextColor={'light gray'}
                                     className="pl-6 h-10 flex-1 text-base text-white"
@@ -54,7 +69,7 @@ export default function Home() {
                                                 className={`flex-row items-center border-0 p-3 px-4 mb-1 ${showBorder ? "border-b-2 border-b-gray-400" : ""} `}
                                             >
                                                 <MapPinIcon size="20" color="gray" />
-                                                <Text className="text-black text-lg ml-2">Abc</Text>
+                                                <Text className="text-black text-lg ml-2">{loc?.name}, {loc?.country}</Text>
                                             </TouchableOpacity>
                                         )
                                     })
